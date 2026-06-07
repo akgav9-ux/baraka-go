@@ -1,0 +1,39 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Добавь модели (опционально, пока пустые)
+model Restaurant {
+  id        Int      @id @default(autoincrement())
+  name      String
+  category  String
+  price     Int
+  rating    Float
+  image     String
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id        Int      @id @default(autoincrement())
+  total     Int
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+}
+
+model Driver {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String
+  email     String?  @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
