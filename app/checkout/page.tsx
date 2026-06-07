@@ -1,22 +1,21 @@
 "use client";
 
-import { cart } from "@/app/lib/cart";
+import { useCart } from "@/app/lib/cart";  // <-- поменял импорт
 import { useRouter } from "next/navigation";
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const cart = useCart();  // <-- вызываем хук
 
   const createOrder = () => {
     alert("Buyurtma yuborildi 🚀");
-
+    
     cart.clear();
-
     router.push("/");
   };
 
   return (
     <main className="p-4 space-y-4">
-
       <h1 className="text-xl font-bold">🛒 Korzina</h1>
 
       {cart.items.length === 0 && (
@@ -40,7 +39,6 @@ export default function CheckoutPage() {
       >
         Buyurtma berish
       </button>
-
     </main>
   );
 }

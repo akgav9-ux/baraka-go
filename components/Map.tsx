@@ -10,10 +10,8 @@ delete (L.Icon.Default.prototype as any)._getIconUrl;
 
 L.Icon.Default.mergeOptions({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
 function ClickHandler({
@@ -51,25 +49,16 @@ export default function Map() {
   const [pointA, setPointA] = useState<any>(null);
   const [pointB, setPointB] = useState<any>(null);
 
-  const route =
-    pointA && pointB ? [pointA, pointB] : [];
+  const route = pointA && pointB ? [pointA, pointB] : [];
 
   return (
     <div className="relative h-full w-full" style={{ height: "100%", width: "100%" }}>
-
       <MapContainer
         center={[41.3, 69.2]}
         zoom={12}
         className="h-full w-full"
         style={{ height: "100%", width: "100%" }}
       >
-        <MapContainer
-  key="gazel-map"
-  center={[41.3, 69.2]}
-  zoom={12}
-  className="h-full w-full"
-  style={{ height: "100%", width: "100%" }}
->
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
         <ClickHandler setA={setPointA} setB={setPointB} />

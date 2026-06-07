@@ -1,9 +1,47 @@
+// app/api/[id]/route.ts
 import { NextResponse } from "next/server";
 
-const MOCK = [ /* скопируй MOCK_RESTAURANTS + menuItems если нужно */ ];
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;  // <-- обязательно await
+    
+    // Твой код с использованием id
+    // Например:
+    const data = { id, message: "Success" };
+    
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const r = MOCK.find((x: any) => x.id === params.id);
-  if (!r) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(r);
+// Если есть POST, PUT, DELETE - делай то же самое
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  // ...
+}
+
+export async function PUT(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  // ...
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  // ...
 }
