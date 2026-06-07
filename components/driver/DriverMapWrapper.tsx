@@ -8,8 +8,8 @@ const Map = dynamic(() => import("./DriverMap"), {
 });
 
 type Props = {
-  from: [number, number];
-  to: [number, number];
+  from={order.fromCoords as [number, number]}
+  to={order.toCoords as [number, number]}
   live?: boolean;
 };
 
