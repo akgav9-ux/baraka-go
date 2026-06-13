@@ -62,12 +62,18 @@ export default function WorkWithUsPage() {
       icon: "🍔",
       bgColor: "from-red-500 to-rose-500",
       glowColor: "shadow-red-500/50",
-      route: "/work-with-us/restaurant",
+      route: "/restaurant/login",
       badge: "🍽️ Hamkorlik"
     }
   ];
 
   const handleServiceClick = (service: any) => {
+    // Для ресторана сразу переходим на страницу входа
+    if (service.id === 5) {
+      router.push("/restaurant/login");
+      return;
+    }
+    // Для остальных с hasLogin - показываем модалку
     if (service.hasLogin) {
       setSelectedRoute(service.route);
       setShowChoiceModal(true);

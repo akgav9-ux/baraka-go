@@ -14,38 +14,46 @@ model User {
 }
 
 model Order {
-  id          Int    @id @default(autoincrement())
-
+  id          Int      @id @default(autoincrement())
   from        String
   to          String
-
   fromLat     Float?
   fromLng     Float?
   toLat       Float?
   toLng       Float?
-
-  status      String @default("pending")
-
+  status      String   @default("pending")
   price       Int
-
   comment     String?
-
-  packageType String? @default("posilka")
-  weight      Int?    @default(5)
+  packageType String?  @default("posilka")
+  weight      Int?     @default(5)
   urgent      Boolean? @default(false)
-  payment     String? @default("cash")
+  payment     String?  @default("cash")
   changeAmount Int?
-
   courierName String?
   courierId   Int?
-
   clientName  String?
   clientPhone String?
-
   createdAt   DateTime @default(now())
   acceptedAt  DateTime?
-  
-  extraData   String?  // JSON строка для хранения дополнительных данных
+  extraData   String?
+}
+
+model Trip {
+  id          Int      @id @default(autoincrement())
+  from        String
+  to          String
+  date        String
+  time        String
+  price       Int
+  seats       Int
+  car         String
+  driver      String
+  driverId    Int
+  driverPhone String
+  rating      Float    @default(4.5)
+  comment     String?
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
 }
 
 model Driver {
@@ -58,11 +66,69 @@ model Driver {
 }
 
 model Restaurant {
-  id        Int      @id @default(autoincrement())
-  name      String
-  category  String
-  price     Int
-  rating    Float
-  image     String
-  createdAt DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  name         String
+  category     String
+  price        Int
+  rating       Float
+  image        String
+  createdAt    DateTime @default(now())
+  description  String?
+  deliveryTime String
+  minOrder     Int
+  deliveryFee  Int
+  isOpen       Boolean  @default(true)
+  dishes       Dish[]
+  foodOrders   FoodOrder[]
+}
+
+model Dish {
+  id           Int        @id @default(autoincrement())
+  name         String
+  description  String?
+  price        Int
+  image        String
+  category     String
+  isAvailable  Boolean    @default(true)
+  restaurantId Int
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  createdAt    DateTime   @default(now())
+}
+
+model FoodOrder {
+  id            Int        @id @default(autoincrement())
+  orderNumber   String     @unique
+  restaurantId  Int
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+  items         String
+  totalPrice    Int
+  deliveryFee   Int
+  finalPrice    Int
+  status        String     @default("pending")
+  address       String
+  clientName    String
+  clientPhone   String
+  comment       String?
+  payment       String
+  paymentStatus String     @default("pending")
+  createdAt     DateTime   @default(now())
+  deliveredAt   DateTime?
+}
+
+// ========== НОВАЯ МОДЕЛЬ: ЗАЯВКИ ОТ РЕСТОРАНОВ ==========
+model PartnerRequest {
+  id                 Int      @id @default(autoincrement())
+  name               String
+  phone              String
+  email              String?
+  password           String?
+  restaurantName     String
+  restaurantCategory String
+  address            String
+  description        String?
+  website            String?
+  instagram          String?
+  status             String   @default("pending")
+  restaurantId       Int?     // 👈 ДОБАВЬТЕ ЭТУ СТРОКУ
+  createdAt          DateTime @default(now())
 }

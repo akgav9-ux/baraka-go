@@ -8,57 +8,18 @@ const Map = dynamic(() => import("../../components/Map"), {
   ssr: false,
 });
 
-const mockTrips = [
-  {
-    id: 1,
-    from: "Asaka",
-    to: "Toshkent",
-    price: 120000,
-    time: "14:00",
-    seats: 3,
-    driver: "Sarvar",
-    car: "Toyota Camry",
-    rating: 4.8,
-  },
-  {
-    id: 2,
-    from: "Andijon",
-    to: "Toshkent",
-    price: 150000,
-    time: "09:00",
-    seats: 2,
-    driver: "Jasur",
-    car: "Hyundai Sonata",
-    rating: 4.9,
-  },
-  {
-    id: 3,
-    from: "Namangan",
-    to: "Toshkent",
-    price: 130000,
-    time: "16:30",
-    seats: 4,
-    driver: "Alisher",
-    car: "Kia Optima",
-    rating: 4.7,
-  },
-];
-
 export default function IntercityPage() {
   const router = useRouter();
   
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   
-  const [selectedTrip, setSelectedTrip] = useState<any>(null);
   const [showTrips, setShowTrips] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
   const [showComment, setShowComment] = useState(false);
-  const [showStop, setShowStop] = useState(false);
 
   const [payment, setPayment] = useState("cash");
   const [comment, setComment] = useState("");
-  const [offerPrice, setOfferPrice] = useState("");
+  const [price, setPrice] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [stop, setStop] = useState("");
@@ -67,6 +28,33 @@ export default function IntercityPage() {
   const [showPassengers, setShowPassengers] = useState(false);
   const [changeAmount, setChangeAmount] = useState("");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  
+  // Список попутных рейсов от водителей
+  const [trips, setTrips] = useState<any[]>([]);
+  const [loadingTrips, setLoadingTrips] = useState(false);
+
+  // Загрузка рейсов от водителей
+  const fetchTrips = async () => {
+    setLoadingTrips(true);
+    try {
+      const res = await fetch('/api/trips');
+      const data = await res.json();
+      console.log("🚌 Попутные рейсы:", data);
+      setTrips(data);
+    } catch (error) {
+      console.error('Ошибка загрузки рейсов:', error);
+    } finally {
+      setLoadingTrips(false);
+    }
+  };
+
+  // Загружаем рейсы при открытии
+  useEffect(() => {
+    fetchTrips();
+    // Обновляем каждые 10 секунд
+    const interval = setInterval(fetchTrips, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -84,12 +72,51 @@ export default function IntercityPage() {
   };
 
   const calculateChange = () => {
-    const priceNum = Number(offerPrice || selectedTrip?.price);
+    const priceNum = Number(price);
     const changeNum = Number(changeAmount);
     if (priceNum && changeNum && changeNum > priceNum) {
       return changeNum - priceNum;
     }
     return 0;
+  };
+
+  // Бронирование места у водителя
+  const handleBookTrip = async (trip: any) => {
+    if (confirm(`${trip.from} → ${trip.to} yo'nalishidagi safarga ${trip.price.toLocaleString()} so'mga bron qilasizmi?\n\n🚗 ${trip.car}\n👤 Haydovchi: ${trip.driver}\n⭐ Reyting: ${trip.rating}\n💺 ${trip.seats} ta joy mavjud`)) {
+      
+      try {
+        // Уменьшаем количество мест
+        const res = await fetch('/api/trips', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: trip.id,
+            seats: trip.seats - 1,
+            status: trip.seats - 1 === 0 ? 'full' : 'active',
+          }),
+        });
+        
+        if (res.ok) {
+          alert(`✅ Safar bron qilindi!\n\n📍 ${trip.from} → ${trip.to}\n💰 ${trip.price.toLocaleString()} so'm\n🚗 Haydovchi: ${trip.driver}\n📞 Telefon: ${trip.driverPhone}\n\nHaydovchi sizga qo'ng'iroq qiladi!`);
+          
+          // Обновляем список рейсов
+          await fetchTrips();
+          
+          // Закрываем список рейсов
+          setShowTrips(false);
+        } else {
+          alert("❌ Xatolik yuz berdi");
+        }
+      } catch (error) {
+        console.error(error);
+        alert("❌ Xatolik yuz berdi");
+      }
+    }
+  };
+
+  // Позвонить водителю
+  const handleCallDriver = (phone: string) => {
+    window.location.href = `tel:${phone}`;
   };
 
   const handleOrder = async () => {
@@ -98,36 +125,54 @@ export default function IntercityPage() {
       return;
     }
 
-    if (!selectedTrip) {
-      alert("Iltimos, safarni tanlang");
-      return;
-    }
-
-    const finalPrice = offerPrice ? Number(offerPrice) : selectedTrip.price;
-
-    if (!finalPrice || finalPrice <= 0) {
+    if (!price || Number(price) <= 0) {
       alert("Iltimos, to'g'ri narxni kiriting");
       return;
     }
 
-    if (payment === "cash" && changeAmount && Number(changeAmount) < finalPrice) {
+    if (payment === "cash" && changeAmount && Number(changeAmount) < Number(price)) {
       alert("Berilgan pul narxdan kam bo'lishi mumkin emas!");
       return;
     }
 
     setLoading(true);
 
-    setTimeout(() => {
-      alert(`✅ Buyurtma qabul qilindi!\n\n📍 Qayerdan: ${from}\n📍 Qayerga: ${to}\n🚗 Haydovchi: ${selectedTrip.driver}\n💰 Narx: ${finalPrice.toLocaleString()} so'm\n👥 Yo'lovchilar: ${passengers}\n💳 To'lov: ${getPaymentText()}\n\nHaydovchi siz bilan bog'lanadi!`);
-      setLoading(false);
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from,
+          to,
+          price: Number(price),
+          passengers,
+          payment,
+          comment,
+          stop: stop || null,
+          packageType: "intercity",
+          weight: 0,
+          urgent: false,
+          changeAmount: payment === "cash" ? Number(changeAmount) : null,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Ошибка");
+
+      const order = await res.json();
+      alert(`✅ Buyurtma qabul qilindi! №${order.id}\n\n📍 ${from} → ${to}\n💰 ${Number(price).toLocaleString()} so'm\n👥 ${passengers} yo'lovchi\n\nTez orada haydovchi siz bilan bog'lanadi!`);
       router.push("/");
-    }, 1500);
+    } catch (error) {
+      console.error(error);
+      alert("❌ Xatolik yuz berdi");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <main className="h-screen flex flex-col bg-gray-100 relative">
       
-      {/* ========== СВЕТЛО-ФИОЛЕТОВАЯ ШАПКА С РАДИУСОМ СНИЗУ ========== */}
+      {/* ШАПКА */}
       <div className="bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 text-white px-4 py-3 flex items-center justify-between shadow-lg relative z-30 rounded-b-3xl">
         <div>
           <p className="text-xs opacity-80">🚌 Shaharlararo</p>
@@ -138,40 +183,108 @@ export default function IntercityPage() {
         </button>
       </div>
 
-      {/* ========== КАРТА ========== */}
+      {/* КАРТА */}
       <div className="h-[35vh] w-full relative z-0">
         <Map />
         
-        {/* Floating price tag */}
-        {(offerPrice || selectedTrip) && (
+        {price && Number(price) > 0 && (
           <div className="absolute bottom-3 left-3 right-3 bg-white/95 backdrop-blur-md rounded-xl p-2 shadow-lg z-20">
             <div className="flex justify-between items-center">
               <span className="text-xs text-gray-500">💰 Narx</span>
               <span className="font-bold text-purple-600">
-                {(offerPrice ? Number(offerPrice) : selectedTrip?.price || 0).toLocaleString()} so'm
+                {Number(price).toLocaleString()} so'm
               </span>
             </div>
           </div>
         )}
       </div>
 
-      {/* ========== ФОРМА ========== */}
+      {/* ФОРМА */}
       <div className="flex-1 bg-white rounded-t-3xl -mt-2 z-10 p-4 pb-32 space-y-4 shadow-xl overflow-y-auto">
         
-        {/* HEADER */}
         <div className="flex items-center justify-between">
           <div>
             <p className="font-bold text-lg text-gray-800">🚌 Shaharlararo</p>
-            <p className="text-xs text-gray-500">Tanlang va jo'nang</p>
+            <p className="text-xs text-gray-500">Jo'nash vaqtini tanlang</p>
           </div>
-
           <button
-            onClick={() => setShowTrips(!showTrips)}
-            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition transform active:scale-95"
+            onClick={() => {
+              fetchTrips();
+              setShowTrips(!showTrips);
+            }}
+            className="px-4 py-2 bg-gray-100 text-purple-600 rounded-xl text-sm font-semibold border border-purple-200"
           >
-            {showTrips ? "📋 Yopish" : "🚐 Safarlar"}
+            {showTrips ? "📋 Yopish" : "🚐 Safarlarni ko'rish"}
           </button>
         </div>
+
+        {/* СПИСОК ПОПУТНЫХ РЕЙСОВ ОТ ВОДИТЕЛЕЙ */}
+        {showTrips && (
+          <div className="space-y-3 animate-fadeIn">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-gray-500">🚌 Haydovchilarning reyslari:</p>
+              <button onClick={fetchTrips} className="text-xs text-purple-500">
+                🔄 Yangilash
+              </button>
+            </div>
+            
+            {loadingTrips ? (
+              <div className="text-center py-8">
+                <div className="inline-block w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-xs text-gray-400 mt-2">Yuklanmoqda...</p>
+              </div>
+            ) : trips.length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 rounded-xl">
+                <div className="text-4xl mb-2">🚌</div>
+                <p className="text-gray-500 text-sm">Hozircha hech qanday reys yo'q</p>
+                <p className="text-xs text-gray-400">Haydovchilar reys qo'shganda bu yerda ko'rinadi</p>
+              </div>
+            ) : (
+              trips.map((trip) => (
+                <div key={trip.id} className="bg-white border-2 border-purple-200 rounded-xl p-3 shadow-sm">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="font-bold text-gray-800">
+                        {trip.from} <span className="text-purple-500">→</span> {trip.to}
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full">📅 {trip.date}</span>
+                        <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full">⏰ {trip.time}</span>
+                        <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full">🚗 {trip.car}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs text-yellow-600">⭐ {trip.rating}</span>
+                        <span className="text-xs text-green-600">💺 {trip.seats} ta joy</span>
+                        <span className="text-xs text-purple-600 font-bold">{trip.price.toLocaleString()} so'm</span>
+                      </div>
+                      {trip.comment && (
+                        <div className="text-xs text-gray-400 mt-1">📝 {trip.comment}</div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1 ml-2">
+                      <button
+                        onClick={() => handleBookTrip(trip)}
+                        disabled={trip.seats === 0}
+                        className="px-3 py-1 bg-purple-500 text-white rounded-lg text-xs font-semibold disabled:opacity-50"
+                      >
+                        Bron qilish
+                      </button>
+                      <button
+                        onClick={() => handleCallDriver(trip.driverPhone)}
+                        className="px-3 py-1 bg-green-500 text-white rounded-lg text-xs font-semibold"
+                      >
+                        📞 Qo'ng'iroq
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-2 pt-2 border-t text-xs text-gray-400">
+                    👤 Haydovchi: {trip.driver}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
 
         {/* FROM */}
         <div className="relative">
@@ -196,74 +309,17 @@ export default function IntercityPage() {
         </div>
 
         {/* STOP */}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <div className="absolute left-3 top-3 text-blue-500 text-lg">🔄</div>
-            <input
-              className="w-full p-3 pl-10 border rounded-xl focus:outline-none focus:border-purple-500 transition"
-              placeholder="To'xtash joyi (ixtiyoriy)"
-              value={stop}
-              onChange={(e) => setStop(e.target.value)}
-            />
-          </div>
+        <div className="relative">
+          <div className="absolute left-3 top-3 text-blue-500 text-lg">🔄</div>
+          <input
+            className="w-full p-3 pl-10 border rounded-xl focus:outline-none focus:border-purple-500 transition"
+            placeholder="To'xtash joyi (ixtiyoriy)"
+            value={stop}
+            onChange={(e) => setStop(e.target.value)}
+          />
         </div>
 
-        {/* TRIP LIST */}
-        {showTrips && (
-          <div className="space-y-2 animate-fadeIn">
-            <p className="text-xs font-semibold text-gray-500">📋 Mavjud safarlar:</p>
-            {mockTrips.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => {
-                  setSelectedTrip(t);
-                  setFrom(t.from);
-                  setTo(t.to);
-                  setShowTrips(false);
-                }}
-                className={`w-full p-4 rounded-xl border-2 text-left transition transform active:scale-98 ${
-                  selectedTrip?.id === t.id
-                    ? "bg-purple-500 text-white border-purple-600 shadow-md"
-                    : "bg-white border-gray-200 hover:border-purple-400 hover:shadow-md"
-                }`}
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-bold text-lg">{t.from} → {t.to}</div>
-                    <div className="text-sm opacity-80">🚗 {t.car} • 👤 {t.driver}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold">{t.time}</div>
-                    <div className="text-xs opacity-80">⭐ {t.rating}</div>
-                  </div>
-                </div>
-                <div className="flex justify-between mt-2 text-sm">
-                  <span>💰 {t.price.toLocaleString()} so'm</span>
-                  <span>💺 {t.seats} joy</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* SELECTED TRIP INFO */}
-        {selectedTrip && !showTrips && (
-          <div className="bg-gradient-to-r from-purple-50 to-white border border-purple-200 rounded-xl p-3">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-xs text-gray-500">Tanlangan safar</p>
-                <p className="font-semibold">{selectedTrip.from} → {selectedTrip.to}</p>
-                <p className="text-xs text-gray-500">{selectedTrip.time} • {selectedTrip.car} • {selectedTrip.driver}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-500">⭐ {selectedTrip.rating}</p>
-                <p className="text-xs text-gray-500">💺 {selectedTrip.seats} joy</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* PASSENGERS COUNT */}
+        {/* Количество пассажиров */}
         <div>
           <button
             onClick={() => setShowPassengers(!showPassengers)}
@@ -278,7 +334,7 @@ export default function IntercityPage() {
 
           {showPassengers && (
             <div className="mt-2 p-3 bg-gray-50 rounded-xl flex gap-2">
-              {[1, 2, 3, 4].map((num) => (
+              {[1, 2, 3, 4, 5, 6].map((num) => (
                 <button
                   key={num}
                   onClick={() => {
@@ -298,7 +354,7 @@ export default function IntercityPage() {
           )}
         </div>
 
-        {/* OFFER PRICE (TORG) */}
+        {/* Цена */}
         <div className="bg-gradient-to-r from-purple-50 to-white border border-purple-200 rounded-2xl p-4 space-y-2">
           <p className="text-sm font-bold text-gray-800 flex items-center gap-2">
             <span className="text-xl">💰</span> 
@@ -309,34 +365,31 @@ export default function IntercityPage() {
             <span className="absolute left-3 top-3 text-gray-500">so'm</span>
             <input
               type="number"
-              value={offerPrice}
-              onChange={(e) => setOfferPrice(e.target.value)}
-              placeholder={selectedTrip ? `Taklif narx (${selectedTrip.price.toLocaleString()} so'm)` : "Masalan: 100 000"}
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="Masalan: 100 000"
               className="w-full p-3 pl-16 rounded-xl border focus:outline-none focus:border-purple-500 text-lg font-semibold"
             />
           </div>
           
-          {offerPrice && Number(offerPrice) > 0 && selectedTrip && (
+          {price && Number(price) > 0 && (
             <div className="mt-2 p-3 bg-purple-100 rounded-xl">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-700">💎 Sizning narxingiz:</span>
                 <span className="font-bold text-purple-700 text-lg">
-                  {Number(offerPrice).toLocaleString()} so'm
+                  {Number(price).toLocaleString()} so'm
                 </span>
               </div>
-              {Number(offerPrice) < selectedTrip.price && (
-                <p className="text-xs text-green-600 mt-1">✅ Haydovchiga taklif yuboriladi</p>
-              )}
             </div>
           )}
           
           <p className="text-xs text-gray-500 flex items-center gap-1">
             <span>ℹ️</span> 
-            Siz narx taklif qilasiz, haydovchi qabul qiladi yoki o‘zgartiradi
+            Siz narx taklif qilasiz, haydovchilar taklifni ko'rib chiqadi
           </p>
         </div>
 
-        {/* PAYMENT & COMMENT */}
+        {/* Оплата и комментарий */}
         <div className="flex gap-3">
           <button
             type="button"
@@ -360,22 +413,22 @@ export default function IntercityPage() {
         </div>
       </div>
 
-      {/* ========== BOTTOM BAR ========== */}
+      {/* Кнопка заказа */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-3 z-50 shadow-lg">
         <button
           onClick={handleOrder}
-          disabled={loading || !from || !to || !selectedTrip}
+          disabled={loading || !from || !to || !price}
           className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white p-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed font-bold transition transform active:scale-95 shadow-md"
         >
           {loading ? "⏳ Yuborilmoqda..." : "🚐 Buyurtma berish"}
         </button>
       </div>
 
-      {/* ========== PAYMENT MODAL ========== */}
+      {/* Модалка оплаты */}
       {showPaymentModal && (
         <>
           <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setShowPaymentModal(false)} />
-          <div className="fixed left-0 bottom-0 w-80 bg-white rounded-tr-2xl shadow-2xl z-50 p-4 animate-slideUp">
+          <div className="fixed left-0 bottom-0 w-80 bg-white rounded-tr-2xl shadow-2xl z-50 p-4">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold">💳 To'lov turi</h2>
               <button onClick={() => setShowPaymentModal(false)} className="text-xl">✕</button>
@@ -388,7 +441,7 @@ export default function IntercityPage() {
                   setChangeAmount("");
                   setShowPaymentModal(false);
                 }}
-                className={`w-full p-3 rounded-xl border-2 flex items-center gap-3 transition ${
+                className={`w-full p-3 rounded-xl border-2 flex items-center gap-3 ${
                   payment === "card" ? "border-purple-500 bg-purple-50" : "border-gray-200"
                 }`}
               >
@@ -402,7 +455,7 @@ export default function IntercityPage() {
 
               <button
                 onClick={() => setPayment("cash")}
-                className={`w-full p-3 rounded-xl border-2 flex items-center gap-3 transition ${
+                className={`w-full p-3 rounded-xl border-2 flex items-center gap-3 ${
                   payment === "cash" ? "border-purple-500 bg-purple-50" : "border-gray-200"
                 }`}
               >
@@ -427,11 +480,11 @@ export default function IntercityPage() {
                     className="w-full p-2 border rounded-lg text-sm"
                   />
                   
-                  {changeAmount && Number(offerPrice || selectedTrip?.price) && Number(changeAmount) >= Number(offerPrice || selectedTrip?.price) && (
+                  {changeAmount && Number(price) && Number(changeAmount) >= Number(price) && (
                     <div className="mt-2 p-2 bg-purple-50 rounded-lg text-sm">
                       <div className="flex justify-between">
                         <span>To'lov:</span>
-                        <span className="font-bold">{(Number(offerPrice || selectedTrip?.price)).toLocaleString()} so'm</span>
+                        <span className="font-bold">{Number(price).toLocaleString()} so'm</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Berildi:</span>
@@ -446,8 +499,7 @@ export default function IntercityPage() {
 
                   <button
                     onClick={() => {
-                      const finalPrice = Number(offerPrice || selectedTrip?.price);
-                      if (!changeAmount || Number(changeAmount) < finalPrice) {
+                      if (!changeAmount || Number(changeAmount) < Number(price)) {
                         alert("Iltimos, to'lov summasini to'g'ri kiriting");
                         return;
                       }
@@ -464,11 +516,11 @@ export default function IntercityPage() {
         </>
       )}
 
-      {/* ========== COMMENT MODAL ========== */}
+      {/* Модалка комментария */}
       {showComment && (
         <>
           <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setShowComment(false)} />
-          <div className="fixed right-0 bottom-0 w-80 bg-white rounded-tl-2xl shadow-2xl z-50 p-4 animate-slideUp">
+          <div className="fixed right-0 bottom-0 w-80 bg-white rounded-tl-2xl shadow-2xl z-50 p-4">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold">📝 Izoh</h2>
               <button onClick={() => setShowComment(false)} className="text-xl">✕</button>
@@ -496,7 +548,7 @@ export default function IntercityPage() {
         </>
       )}
 
-      {/* ========== BURGER MENU ========== */}
+      {/* Бургер меню */}
       {menuOpen && (
         <div className="fixed inset-0 z-[100]">
           <div className="absolute inset-0 bg-black/40" onClick={() => setMenuOpen(false)} />
@@ -522,16 +574,6 @@ export default function IntercityPage() {
               className="w-full text-left p-3 rounded-xl hover:bg-gray-100 transition"
             >
               🏠 Bosh sahifa
-            </button>
-
-            <button
-              onClick={() => {
-                setMenuOpen(false);
-                router.push("/intercity/trips");
-              }}
-              className="w-full text-left p-3 rounded-xl hover:bg-gray-100 transition"
-            >
-              📋 Mening safarlarim
             </button>
 
             <button
@@ -570,24 +612,8 @@ export default function IntercityPage() {
             transform: translateY(0);
           }
         }
-        
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(100%);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out;
-        }
-        
-        .animate-slideUp {
-          animation: slideUp 0.3s ease-out;
         }
       `}</style>
     </main>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"; // 👈 ИЗМЕНИТЕ ЭТУ СТРОКУ
 import { RestaurantCard } from "@/components/RestaurantCard";
 import { getRestaurants, Restaurant } from "@/lib/api";
 
@@ -17,7 +17,7 @@ const CATEGORIES = [
 ];
 
 export default function FoodPage() {
-  const router = useRouter();
+  const router = useRouter(); // 👈 Теперь работает
 
   const [activeCategory, setActiveCategory] = useState("Barchasi");
   const [items, setItems] = useState<Restaurant[]>([]);

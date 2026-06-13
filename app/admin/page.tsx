@@ -19,9 +19,25 @@ interface Application {
   createdAt: string;
 }
 
+interface PartnerRequest {
+  id: number;
+  name: string;
+  phone: string;
+  email?: string;
+  restaurantName: string;
+  restaurantCategory: string;
+  address: string;
+  description?: string;
+  website?: string;
+  instagram?: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [applications, setApplications] = useState<Application[]>([]);
+  const [partnerRequests, setPartnerRequests] = useState<PartnerRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
 
@@ -32,6 +48,16 @@ export default function AdminPage() {
       setApplications(data);
     } catch (error) {
       console.error("Error loading applications:", error);
+    }
+  };
+
+  const loadPartnerRequests = async () => {
+    try {
+      const res = await fetch("/api/partners/restaurant");
+      const data = await res.json();
+      setPartnerRequests(data);
+    } catch (error) {
+      console.error("Error loading partner requests:", error);
     } finally {
       setLoading(false);
     }
@@ -39,16 +65,24 @@ export default function AdminPage() {
 
   useEffect(() => {
     loadApplications();
+    loadPartnerRequests();
   }, []);
 
-  const updateStatus = async (id: number, status: string) => {
+  const updateStatus = async (id: number, status: string, type: "driver" | "restaurant") => {
     try {
-      await fetch("/api/applications", {
+      const endpoint = type === "driver" ? "/api/applications" : "/api/partners/restaurant";
+      await fetch(endpoint, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status }),
       });
-      loadApplications();
+      
+      if (type === "driver") {
+        loadApplications();
+      } else {
+        loadPartnerRequests();
+      }
+      
       alert(status === "approved" ? "✅ Tasdiqlandi!" : "❌ Rad etildi");
     } catch (error) {
       console.error("Error updating status:", error);
@@ -74,6 +108,7 @@ export default function AdminPage() {
       case "gazel": return "🚚";
       case "intercity": return "🌍";
       case "taxi": return "🚕";
+      case "restaurant": return "🍕";
       default: return "🚗";
     }
   };
@@ -84,26 +119,63 @@ export default function AdminPage() {
       case "gazel": return "Gazel yuk tashuvchi";
       case "intercity": return "Mejgorod haydovchi";
       case "taxi": return "Taksi haydovchi";
+      case "restaurant": return "Restoran";
       default: return type;
     }
   };
 
-  const filteredApplications = applications.filter(app => {
+  // Объединяем все заявки в один массив
+  const allApplications = [
+    ...applications.map(app => ({
+      ...app,
+      type: "driver" as const,
+      displayName: `${app.name} ${app.surname}`,
+      displayInfo: getTransportName(app.transport),
+      icon: getTransportIcon(app.transport),
+    })),
+    ...partnerRequests.map(req => ({
+      id: req.id,
+      name: req.name,
+      surname: "",
+      fatherName: "",
+      phone: req.phone,
+      passport: "",
+      driverLicense: "",
+      carPassport: "",
+      transport: "restaurant",
+      status: req.status,
+      createdAt: req.createdAt,
+      type: "restaurant" as const,
+      displayName: req.restaurantName,
+      displayInfo: req.restaurantCategory,
+      icon: "🍕",
+      email: req.email,
+      address: req.address,
+      description: req.description,
+      website: req.website,
+      instagram: req.instagram,
+    })),
+  ];
+
+  const filteredApplications = allApplications.filter(app => {
     if (activeTab === "all") return true;
     if (activeTab === "pending") return app.status === "pending";
     if (activeTab === "approved") return app.status === "approved";
     if (activeTab === "rejected") return app.status === "rejected";
+    if (activeTab === "restaurant") return app.transport === "restaurant";
     return app.transport === activeTab;
   });
 
   const stats = {
-    total: applications.length,
-    pending: applications.filter(a => a.status === "pending").length,
-    approved: applications.filter(a => a.status === "approved").length,
-    rejected: applications.filter(a => a.status === "rejected").length,
+    total: allApplications.length,
+    pending: allApplications.filter(a => a.status === "pending").length,
+    approved: allApplications.filter(a => a.status === "approved").length,
+    rejected: allApplications.filter(a => a.status === "rejected").length,
     courier: applications.filter(a => a.transport === "courier").length,
     gazel: applications.filter(a => a.transport === "gazel").length,
     intercity: applications.filter(a => a.transport === "intercity").length,
+    taxi: applications.filter(a => a.transport === "taxi").length,
+    restaurant: partnerRequests.length,
   };
 
   if (loading) {
@@ -115,7 +187,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-4">
+    <main className="min-h-screen bg-gray-100 p-4 pb-24">
       <div className="max-w-4xl mx-auto">
         
         {/* Header */}
@@ -200,6 +272,14 @@ export default function AdminPage() {
           >
             🌍 Mejgorod ({stats.intercity})
           </button>
+          <button
+            onClick={() => setActiveTab("restaurant")}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${
+              activeTab === "restaurant" ? "bg-orange-500 text-white" : "bg-white text-gray-700"
+            }`}
+          >
+            🍕 Restoran ({stats.restaurant})
+          </button>
         </div>
 
         {/* Applications List */}
@@ -210,69 +290,109 @@ export default function AdminPage() {
             </div>
           ) : (
             filteredApplications.map((app) => (
-              <div key={app.id} className="bg-white rounded-xl p-4 shadow">
-                {/* Header */}
+              <div key={`${app.type}-${app.id}`} className="bg-white rounded-xl p-4 shadow">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">{getTransportIcon(app.transport)}</span>
+                    <span className="text-2xl">{app.icon}</span>
                     <div>
-                      <h3 className="font-bold">{app.name} {app.surname}</h3>
-                      <p className="text-xs text-gray-500">{getTransportName(app.transport)}</p>
+                      <h3 className="font-bold">{app.displayName}</h3>
+                      <p className="text-xs text-gray-500">{app.displayInfo}</p>
                     </div>
                   </div>
                   {getStatusBadge(app.status)}
                 </div>
 
-                {/* Contact Info */}
                 <div className="grid grid-cols-2 gap-2 text-sm mb-3 pb-3 border-b">
                   <div>
                     <p className="text-xs text-gray-500">📞 Telefon</p>
                     <p className="font-medium">{app.phone}</p>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-500">🆔 Passport</p>
-                    <p className="font-medium">{app.passport}</p>
-                  </div>
-                </div>
-
-                {/* Documents */}
-                <div className="space-y-2 text-sm mb-3">
-                  <p className="text-xs text-gray-500">📄 Hujjatlar:</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-gray-50 p-2 rounded">
-                      <p className="text-xs text-gray-500">🚗 Texnik pasport</p>
-                      <p className="text-sm">{app.carPassport || "-"}</p>
+                  {app.type === "driver" ? (
+                    <div>
+                      <p className="text-xs text-gray-500">🆔 Passport</p>
+                      <p className="font-medium">{(app as any).passport || "-"}</p>
                     </div>
-                    <div className="bg-gray-50 p-2 rounded">
-                      <p className="text-xs text-gray-500">🪪 Haydovchilik guvohnomasi</p>
-                      <p className="text-sm">{app.driverLicense || "-"}</p>
-                    </div>
-                  </div>
-                  {app.carModel && (
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-gray-50 p-2 rounded">
-                        <p className="text-xs text-gray-500">🚘 Avtomobil modeli</p>
-                        <p className="text-sm">{app.carModel}</p>
-                      </div>
-                      <div className="bg-gray-50 p-2 rounded">
-                        <p className="text-xs text-gray-500">🔢 Avtomobil raqami</p>
-                        <p className="text-sm">{app.carNumber}</p>
-                      </div>
+                  ) : (
+                    <div>
+                      <p className="text-xs text-gray-500">📍 Manzil</p>
+                      <p className="font-medium truncate">{(app as any).address || "-"}</p>
                     </div>
                   )}
                 </div>
 
-                {/* Action Buttons */}
+                {/* Driver specific fields */}
+                {app.type === "driver" && (
+                  <div className="space-y-2 text-sm mb-3">
+                    <p className="text-xs text-gray-500">📄 Hujjatlar:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-gray-50 p-2 rounded">
+                        <p className="text-xs text-gray-500">🚗 Texnik pasport</p>
+                        <p className="text-sm">{(app as any).carPassport || "-"}</p>
+                      </div>
+                      <div className="bg-gray-50 p-2 rounded">
+                        <p className="text-xs text-gray-500">🪪 Haydovchilik guvohnomasi</p>
+                        <p className="text-sm">{(app as any).driverLicense || "-"}</p>
+                      </div>
+                    </div>
+                    {(app as any).carModel && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-gray-50 p-2 rounded">
+                          <p className="text-xs text-gray-500">🚘 Avtomobil modeli</p>
+                          <p className="text-sm">{(app as any).carModel}</p>
+                        </div>
+                        <div className="bg-gray-50 p-2 rounded">
+                          <p className="text-xs text-gray-500">🔢 Avtomobil raqami</p>
+                          <p className="text-sm">{(app as any).carNumber}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Restaurant specific fields */}
+                {app.type === "restaurant" && (
+                  <div className="space-y-2 text-sm mb-3">
+                    {(app as any).description && (
+                      <div className="bg-gray-50 p-2 rounded">
+                        <p className="text-xs text-gray-500">📝 Tavsif</p>
+                        <p className="text-sm">{(app as any).description}</p>
+                      </div>
+                    )}
+                    {(app as any).email && (
+                      <div className="bg-gray-50 p-2 rounded">
+                        <p className="text-xs text-gray-500">📧 Email</p>
+                        <p className="text-sm">{(app as any).email}</p>
+                      </div>
+                    )}
+                    {((app as any).website || (app as any).instagram) && (
+                      <div className="grid grid-cols-2 gap-2">
+                        {(app as any).website && (
+                          <div className="bg-gray-50 p-2 rounded">
+                            <p className="text-xs text-gray-500">🌐 Website</p>
+                            <p className="text-sm truncate">{(app as any).website}</p>
+                          </div>
+                        )}
+                        {(app as any).instagram && (
+                          <div className="bg-gray-50 p-2 rounded">
+                            <p className="text-xs text-gray-500">📷 Instagram</p>
+                            <p className="text-sm">{(app as any).instagram}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {app.status === "pending" && (
                   <div className="flex gap-2 mt-3">
                     <button
-                      onClick={() => updateStatus(app.id, "approved")}
+                      onClick={() => updateStatus(app.id, "approved", app.type)}
                       className="flex-1 bg-green-600 text-white py-2 rounded-xl font-semibold hover:bg-green-700 transition"
                     >
                       ✅ Tasdiqlash
                     </button>
                     <button
-                      onClick={() => updateStatus(app.id, "rejected")}
+                      onClick={() => updateStatus(app.id, "rejected", app.type)}
                       className="flex-1 bg-red-500 text-white py-2 rounded-xl font-semibold hover:bg-red-600 transition"
                     >
                       ❌ Rad etish
@@ -280,7 +400,6 @@ export default function AdminPage() {
                   </div>
                 )}
 
-                {/* Creation date */}
                 <p className="text-xs text-gray-400 mt-3">
                   📅 {new Date(app.createdAt).toLocaleString()}
                 </p>

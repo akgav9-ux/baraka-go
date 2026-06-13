@@ -1,27 +1,16 @@
 import { NextResponse } from "next/server";
+import { PrismaClient } from "@/lib/generated/prisma";
 
-// Определяем тип для ресторана
-interface Restaurant {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  rating: number;
-  image: string;
-  description?: string;
-}
+const prisma = new PrismaClient();
 
-// Пока моки. Когда подключишь Prisma — замени на запрос к базе
-const MOCK: Restaurant[] = [];  // пустой массив с явным типом
-
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const category = searchParams.get("category");
-  let data: Restaurant[] = MOCK;  // <-- добавили тип для data
-  
-  if (category && category !== "Все") {
-    data = data.filter((r: Restaurant) => r.category === category);
+export async function GET() {
+  try {
+    const restaurants = await prisma.restaurant.findMany({
+      where: { isOpen: true },
+      orderBy: { rating: "desc" },
+    });
+    return NextResponse.json(restaurants);
+  } catch (error) {
+    return NextResponse.json({ error: "Ошибка" }, { status: 500 });
   }
-  
-  return NextResponse.json(data);
 }

@@ -59,55 +59,58 @@ export default function Sidebar({
           className="w-full bg-gray-50 rounded-2xl p-4 flex items-center justify-between hover:bg-gray-100 transition"
         >
           <div className="flex items-center gap-3">
-
             <img
               src={userAvatar || "/avatar.png"}
               alt="avatar"
               className="w-14 h-14 rounded-full object-cover border"
             />
-
             <div className="text-left">
               <p className="font-bold">
                 {user?.phone || "Foydalanuvchi"}
               </p>
-
-              <p className="text-yellow-500 text-sm">
-                ⭐⭐⭐⭐⭐
-              </p>
-
-              <p className="text-xs text-gray-500">
-                Safarlar: 12
-              </p>
+              <p className="text-yellow-500 text-sm">⭐⭐⭐⭐⭐</p>
+              <p className="text-xs text-gray-500">Safarlar: 12</p>
             </div>
-
           </div>
-
           <span className="text-xl text-gray-400">›</span>
         </button>
 
-        {/* ACTIVE ORDERS */}
+        {/* BOSH SAHIFA */}
         <button
-  onClick={() => {
-    onClose();
-    router.push("/");
-  }}
-  className="w-full mt-5 text-left p-3 rounded-xl bg-gray-100"
->
-        🏠 Bosh saxifa
-      </button>
-        <button className="w-full mt-5 text-left p-3 rounded-xl bg-gray-100">
+          onClick={() => {
+            onClose();
+            router.push("/");
+          }}
+          className="w-full mt-5 text-left p-3 rounded-xl bg-gray-100"
+        >
+          🏠 Bosh saxifa
+        </button>
+
+        {/* AKTIV BUYURTMALAR */}
+        <button className="w-full mt-2 text-left p-3 rounded-xl bg-gray-100">
           🚕 Aktiv buyurtmalar
         </button>
 
-        {/* HISTORY */}
+        {/* BUYURTMALAR TARIXI */}
         <button className="w-full mt-2 text-left p-3 rounded-xl bg-gray-100">
           📦 Buyurtmalar tarixi
         </button>
 
-        {/* NIGHT MODE */}
+        {/* ========== RESTORAN (ДОБАВЛЕНО) ========== */}
+        <button
+          onClick={() => {
+            onClose();
+            router.push("/restaurant/login");
+          }}
+          className="w-full mt-2 text-left p-3 rounded-xl bg-gray-100 flex items-center gap-2"
+        >
+          <span className="text-xl">🍕</span>
+          <span>Restoran</span>
+        </button>
+
+        {/* TUNGI REJIM */}
         <div className="flex items-center justify-between mt-4 p-3 bg-gray-100 rounded-xl">
           <span>🌙 Tungi rejim</span>
-
           <button
             onClick={() => setDark(!dark)}
             className={`w-10 h-5 flex items-center rounded-full p-1 transition ${
@@ -122,7 +125,7 @@ export default function Sidebar({
           </button>
         </div>
 
-        {/* LOGOUT */}
+        {/* CHIQISH */}
         <button
           onClick={logout}
           className="w-full mt-4 p-3 rounded-xl bg-gray-100"
@@ -130,17 +133,17 @@ export default function Sidebar({
           🚪 Chiqish
         </button>
 
-        {/* BOTTOM BUTTON */}
+        {/* BOTTOM BUTTON - HAMKORLIK */}
         <div className="absolute bottom-5 left-5 right-5">
           <button
-  onClick={() => {
-    onClose();
-    router.push("/work-with-us");
-  }}
-  className="w-full mt-3 p-3 rounded-xl bg-green-600 text-left active:scale-95 transition"
->
-  🤝 Biz bilan ishlash
-</button>
+            onClick={() => {
+              onClose();
+              router.push("/work-with-us");
+            }}
+            className="w-full mt-3 p-3 rounded-xl bg-green-600 text-left active:scale-95 transition text-white"
+          >
+            🤝 Biz bilan ishlash
+          </button>
         </div>
 
       </div>

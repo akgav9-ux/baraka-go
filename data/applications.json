@@ -28,5 +28,58 @@
     "transport": "gazel",
     "status": "approved",
     "createdAt": "2026-06-13T00:09:38.744Z"
+  },
+  {
+    "id": 1781358947539,
+    "name": "akmali",
+    "surname": "M",
+    "fatherName": "M",
+    "phone": "+998910000000",
+    "passport": "123456",
+    "driverLicense": "123456",
+    "carPassport": "123456",
+    "carModel": "aveo",
+    "carNumber": "123456",
+    "carYear": "2025",
+    "carColor": "oq",
+    "seats": "4",
+    "transport": "intercity",
+    "experience": "10",
+    "regions": [
+      "Toshkent",
+      "Andijon",
+      "Buxoro",
+      "Namangan",
+      "Farg'ona"
+    ],
+    "otherRegion": "",
+    "status": "approved",
+    "createdAt": "2026-06-13T13:55:47.539Z"
+  },
+  {
+    "id": 1781359134207,
+    "name": "akmal",
+    "surname": "M",
+    "fatherName": "M",
+    "phone": "+998990000000",
+    "passport": "123456",
+    "driverLicense": "123456",
+    "carPassport": "123456",
+    "carModel": "tiko",
+    "carNumber": "123456",
+    "carYear": "2025",
+    "carColor": "oq",
+    "seats": "4",
+    "transport": "intercity",
+    "experience": "10",
+    "regions": [
+      "Toshkent",
+      "Andijon",
+      "Namangan",
+      "Farg'ona"
+    ],
+    "otherRegion": "",
+    "status": "approved",
+    "createdAt": "2026-06-13T13:58:54.207Z"
   }
 ]
