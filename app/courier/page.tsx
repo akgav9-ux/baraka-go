@@ -103,7 +103,7 @@ export default function CourierPage() {
   return (
     <main className="h-screen flex flex-col bg-gray-100">
       {/* HEADER with MENU BUTTON */}
-      <div className="bg-green-700 text-white px-4 py-3 flex items-center justify-between">
+      <div className="bg-green-700 text-white px-4 py-3 flex items-center justify-between relative z-30 rounded-b-3xl">
         <div>
           <p className="text-xs opacity-80">🛵 Kuryer xizmati</p>
           <p className="text-sm font-semibold">Tez yetkazib berish</p>
@@ -114,7 +114,7 @@ export default function CourierPage() {
       </div>
 
       {/* MAP */}
-      <div className="h-[40vh] w-full">
+      <div className="h-[40vh] w-full relative z-0">
         <Map />
       </div>
 
@@ -246,7 +246,7 @@ export default function CourierPage() {
       {/* PAYMENT MODAL */}
       {showPaymentModal && (
         <>
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setShowPaymentModal(false)} />
+          <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setShowPaymentModal(false)} />
           <div className="fixed left-0 bottom-0 w-80 bg-white rounded-tr-2xl shadow-2xl z-50 p-4">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold">💳 To'lov turi</h2>
@@ -353,7 +353,7 @@ export default function CourierPage() {
       {/* COMMENT MODAL */}
       {showCommentModal && (
         <>
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setShowCommentModal(false)} />
+          <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setShowCommentModal(false)} />
           <div className="fixed right-0 bottom-0 w-80 bg-white rounded-tl-2xl shadow-2xl z-50 p-4">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold">📝 Izoh</h2>
@@ -394,13 +394,13 @@ export default function CourierPage() {
         </>
       )}
 
-      {/* BURGER MENU */}
+      {/* BURGER MENU - FIXED */}
       {menuOpen && (
-        <div className="fixed inset-0 z-50">
+        <div className="fixed inset-0 z-[100]">
           <div className="absolute inset-0 bg-black/40" onClick={() => setMenuOpen(false)} />
           <div
             ref={menuRef}
-            className="absolute top-0 right-0 w-72 h-full bg-white p-4 text-black shadow-xl"
+            className="absolute top-0 right-0 w-72 h-full bg-white p-4 text-black shadow-xl z-[100]"
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="font-bold text-xl">🛵 Menyu</h2>
