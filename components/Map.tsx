@@ -2,7 +2,7 @@
 
 import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import L from "leaflet";
 
 // fix icons
@@ -45,11 +45,41 @@ function ClickHandler({
   return null;
 }
 
-export default function Map() {
+// Добавьте пропсы для from и to
+interface MapProps {
+  from?: string;
+  to?: string;
+  driverPosition?: any;
+}
+
+export default function Map({ from, to, driverPosition }: MapProps) {
   const [pointA, setPointA] = useState<any>(null);
   const [pointB, setPointB] = useState<any>(null);
 
   const route = pointA && pointB ? [pointA, pointB] : [];
+
+  // Геокодирование адресов (если переданы from и to)
+  useEffect(() => {
+    async function geocodeAddress(address: string) {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+        const data = await res.json();
+        if (data && data[0]) {
+          return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+        }
+      } catch (error) {
+        console.error("Geocoding error:", error);
+      }
+      return null;
+    }
+
+    if (from && to) {
+      Promise.all([geocodeAddress(from), geocodeAddress(to)]).then(([a, b]) => {
+        if (a) setPointA(a);
+        if (b) setPointB(b);
+      });
+    }
+  }, [from, to]);
 
   return (
     <div className="relative h-full w-full" style={{ height: "100%", width: "100%" }}>
@@ -65,6 +95,19 @@ export default function Map() {
 
         {pointA && <Marker position={pointA} />}
         {pointB && <Marker position={pointB} />}
+
+        {/* Маркер курьера */}
+        {driverPosition && (
+          <Marker 
+            position={[driverPosition.lat, driverPosition.lng]} 
+            icon={L.divIcon({ 
+              className: "custom-div-icon",
+              html: "🚗",
+              iconSize: [30, 30],
+              popupAnchor: [0, 0]
+            })}
+          />
+        )}
 
         {route.length === 2 && (
           <Polyline positions={route} color="blue" />

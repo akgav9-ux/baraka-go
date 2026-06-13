@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type Order = {
@@ -8,38 +8,24 @@ type Order = {
   from: string;
   to: string;
   price: number;
-  status: "completed" | "cancelled";
+  status: "accepted" | "completed" | "cancelled";
   date: string;
 };
 
 export default function DriverOrdersPage() {
   const router = useRouter();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [tab, setTab] = useState<"completed" | "cancelled">("completed");
 
-  const [orders] = useState<Order[]>([
-    {
-      id: 1,
-      from: "Chilonzor",
-      to: "Markaz",
-      price: 25000,
-      status: "completed",
-      date: "2026-06-07",
-    },
-    {
-      id: 2,
-      from: "Yunusobod",
-      to: "Chorsu",
-      price: 30000,
-      status: "cancelled",
-      date: "2026-06-06",
-    },
-  ]);
+  useEffect(() => {
+    const data = JSON.parse(localStorage.getItem("orders") || "[]");
+    setOrders(data);
+  }, []);
 
   const completed = orders.filter((o) => o.status === "completed");
   const cancelled = orders.filter((o) => o.status === "cancelled");
 
   const totalIncome = completed.reduce((sum, o) => sum + o.price, 0);
-
-  const [tab, setTab] = useState<"completed" | "cancelled">("completed");
 
   const list = tab === "completed" ? completed : cancelled;
 
@@ -47,7 +33,7 @@ export default function DriverOrdersPage() {
     <main className="min-h-screen bg-gray-100 p-4">
 
       <h1 className="text-xl font-bold mb-4">
-        📦 Buyurtmalar tarixi
+        🚕 Taksi buyurtmalar tarixi
       </h1>
 
       {/* TABS */}
@@ -73,7 +59,7 @@ export default function DriverOrdersPage() {
 
       {/* INCOME */}
       <div className="bg-white p-4 rounded-xl mb-4">
-        <p>💰 Umumий доход</p>
+        <p className="text-sm text-gray-500">Umumiy daromad</p>
         <p className="text-green-600 font-bold text-xl">
           {totalIncome} so‘m
         </p>
@@ -81,31 +67,37 @@ export default function DriverOrdersPage() {
 
       {/* LIST */}
       <div className="space-y-3">
-        {list.map((o) => (
-          <div key={o.id} className="bg-white p-4 rounded-xl">
-            <p className="font-bold">
-              📍 {o.from} → {o.to}
-            </p>
+        {list.length === 0 ? (
+          <p className="text-gray-500">Hech qanday buyurtma yo‘q</p>
+        ) : (
+          list.map((o) => (
+            <div key={o.id} className="bg-white p-4 rounded-xl">
 
-            <p className="text-gray-500 text-sm">{o.date}</p>
+              <p className="font-bold">
+                📍 {o.from} → {o.to}
+              </p>
 
-            <p className="font-bold text-green-600">
-              💰 {o.price} so‘m
-            </p>
+              <p className="text-gray-500 text-sm">{o.date}</p>
 
-            <p
-              className={
-                o.status === "completed"
-                  ? "text-green-600 font-semibold"
-                  : "text-red-600 font-semibold"
-              }
-            >
-              {o.status === "completed"
-                ? "✔ Yakunlangan"
-                : "❌ Bekor qilingan"}
-            </p>
-          </div>
-        ))}
+              <p className="font-bold text-green-600">
+                💰 {o.price} so‘m
+              </p>
+
+              <p
+                className={
+                  o.status === "completed"
+                    ? "text-green-600 font-semibold"
+                    : "text-red-600 font-semibold"
+                }
+              >
+                {o.status === "completed"
+                  ? "✔ Yakunlangan"
+                  : "❌ Bekor qilingan"}
+              </p>
+
+            </div>
+          ))
+        )}
       </div>
 
       <button
@@ -114,6 +106,7 @@ export default function DriverOrdersPage() {
       >
         ⬅ Orqaga
       </button>
+
     </main>
   );
 }

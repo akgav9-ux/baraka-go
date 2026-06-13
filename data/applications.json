@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1781308381945,
+    "name": "akmal",
+    "surname": "m",
+    "fatherName": "m",
+    "phone": "+998900000000",
+    "passport": "aa 000000",
+    "driverLicense": "123456",
+    "carPassport": "abc 1234",
+    "carModel": "ravon",
+    "carNumber": "01 a00000",
+    "transport": "gazel",
+    "status": "approved",
+    "createdAt": "2026-06-12T23:53:01.945Z"
+  },
+  {
+    "id": 1781309378744,
+    "name": "akmal",
+    "surname": "M",
+    "fatherName": "M",
+    "phone": "+998910000000",
+    "passport": "AA 000000",
+    "driverLicense": "123456",
+    "carPassport": "ABC 12345",
+    "carModel": "ravon",
+    "carNumber": "01 AB 234",
+    "transport": "gazel",
+    "status": "approved",
+    "createdAt": "2026-06-13T00:09:38.744Z"
+  }
+]
