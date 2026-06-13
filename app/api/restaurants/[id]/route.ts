@@ -1,15 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@/lib/generated/prisma";
 
 const prisma = new PrismaClient();
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const restaurant = await prisma.restaurant.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       include: { dishes: true },
     });
     
@@ -19,6 +20,7 @@ export async function GET(
     
     return NextResponse.json(restaurant);
   } catch (error) {
+    console.error(error);
     return NextResponse.json({ error: "Ошибка" }, { status: 500 });
   }
 }
