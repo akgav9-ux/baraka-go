@@ -74,32 +74,39 @@ export default function RestaurantDashboard() {
       router.push("/restaurant/login");
       return;
     }
-    setUser(JSON.parse(storedUser));
-    loadDishes();
-    loadOrders();
+    const userData = JSON.parse(storedUser);
+    setUser(userData);
+    
+    // Используем restaurantId или id
+    const restaurantId = userData.restaurantId || userData.id;
+    console.log("Restaurant ID:", restaurantId);
+    
+    loadDishes(restaurantId);
+    loadOrders(restaurantId);
   }, []);
 
-  const loadDishes = async () => {
+  const loadDishes = async (restaurantId: number) => {
+    if (!restaurantId) {
+      console.error("No restaurantId!");
+      setLoading(false);
+      return;
+    }
+    
     try {
-      const storedUser = localStorage.getItem("restaurantUser");
-      if (!storedUser) return;
-      const userData = JSON.parse(storedUser);
-      
-      const res = await fetch(`/api/dishes?restaurantId=${userData.id}`);
+      const res = await fetch(`/api/dishes?restaurantId=${restaurantId}`);
       const data = await res.json();
+      console.log("Dishes loaded:", data);
       setDishes(data);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const loadOrders = async () => {
+  const loadOrders = async (restaurantId: number) => {
+    if (!restaurantId) return;
+    
     try {
-      const storedUser = localStorage.getItem("restaurantUser");
-      if (!storedUser) return;
-      const userData = JSON.parse(storedUser);
-      
-      const res = await fetch(`/api/food-orders?restaurantId=${userData.id}`);
+      const res = await fetch(`/api/food-orders?restaurantId=${restaurantId}`);
       const data = await res.json();
       setOrders(data);
       calculateStats(data);
@@ -152,13 +159,14 @@ export default function RestaurantDashboard() {
     try {
       const storedUser = localStorage.getItem("restaurantUser");
       const userData = JSON.parse(storedUser!);
+      const restaurantId = userData.restaurantId || userData.id;
       
       const formData = new FormData();
       formData.append("name", dishForm.name);
       formData.append("description", dishForm.description);
       formData.append("price", dishForm.price);
       formData.append("category", dishForm.category);
-      formData.append("restaurantId", userData.id);
+      formData.append("restaurantId", String(restaurantId));
       if (selectedFile) {
         formData.append("image", selectedFile);
       }
@@ -169,17 +177,19 @@ export default function RestaurantDashboard() {
       });
       
       if (res.ok) {
-        alert(editingDish ? "✅ Taom yangilandi!" : "✅ Taom qo'shildi!");
+        alert("✅ Taom qo'shildi!");
         setShowDishModal(false);
         setEditingDish(null);
         setSelectedFile(null);
         setImagePreview("");
         setDishForm({ name: "", description: "", price: "", category: "Горячее" });
-        loadDishes();
+        loadDishes(restaurantId);
       } else {
-        alert("❌ Xatolik");
+        const error = await res.json();
+        alert("❌ Xatolik: " + (error.error || "Noma'lum xato"));
       }
     } catch (error) {
+      console.error(error);
       alert("❌ Xatolik");
     }
   };
@@ -211,7 +221,11 @@ export default function RestaurantDashboard() {
         setSelectedFile(null);
         setImagePreview("");
         setDishForm({ name: "", description: "", price: "", category: "Горячее" });
-        loadDishes();
+        
+        const storedUser = localStorage.getItem("restaurantUser");
+        const userData = JSON.parse(storedUser!);
+        const restaurantId = userData.restaurantId || userData.id;
+        loadDishes(restaurantId);
       } else {
         alert("❌ Xatolik");
       }
@@ -224,7 +238,10 @@ export default function RestaurantDashboard() {
     if (confirm("Bu taomni o'chirish?")) {
       try {
         await fetch(`/api/dishes?id=${id}`, { method: "DELETE" });
-        loadDishes();
+        const storedUser = localStorage.getItem("restaurantUser");
+        const userData = JSON.parse(storedUser!);
+        const restaurantId = userData.restaurantId || userData.id;
+        loadDishes(restaurantId);
       } catch (error) {
         alert("❌ Xatolik");
       }
@@ -238,7 +255,10 @@ export default function RestaurantDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: orderId, status }),
       });
-      loadOrders();
+      const storedUser = localStorage.getItem("restaurantUser");
+      const userData = JSON.parse(storedUser!);
+      const restaurantId = userData.restaurantId || userData.id;
+      loadOrders(restaurantId);
     } catch (error) {
       alert("❌ Xatolik");
     }

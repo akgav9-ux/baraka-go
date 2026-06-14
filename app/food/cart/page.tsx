@@ -9,6 +9,8 @@ interface CartItem {
   price: number;
   image: string;
   quantity: number;
+  restaurantId: number;
+  restaurantName: string;
 }
 
 export default function CartPage() {
@@ -27,6 +29,11 @@ export default function CartPage() {
       setCart(JSON.parse(savedCart));
     }
   }, []);
+
+  // Получаем уникальный ресторан в корзине
+  const uniqueRestaurants = [...new Map(cart.map(item => [item.restaurantId, item])).values()];
+  const restaurant = uniqueRestaurants[0];
+  const isMultiRestaurant = uniqueRestaurants.length > 1;
 
   const updateQuantity = (id: number, delta: number) => {
     const newCart = cart.map(item => {
@@ -49,7 +56,7 @@ export default function CartPage() {
   };
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const deliveryFee = 10000;
+  const deliveryFee = restaurant?.deliveryFee || 10000;
   const finalPrice = totalPrice + deliveryFee;
 
   const handleOrder = async () => {
@@ -65,6 +72,10 @@ export default function CartPage() {
       alert("Введите телефон");
       return;
     }
+    if (isMultiRestaurant) {
+      alert("Нельзя заказывать из разных ресторанов одновременно!");
+      return;
+    }
 
     setLoading(true);
     
@@ -73,7 +84,7 @@ export default function CartPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          restaurantId: cart[0]?.restaurantId || 1,
+          restaurantId: restaurant.restaurantId,
           items: cart,
           totalPrice,
           deliveryFee,
@@ -88,7 +99,7 @@ export default function CartPage() {
       
       if (res.ok) {
         localStorage.removeItem("foodCart");
-        alert("✅ Заказ оформлен! Ожидайте доставку.");
+        alert("✅ Заказ оформлен! Ресторан скоро подтвердит.");
         router.push("/food/orders");
       } else {
         alert("❌ Ошибка при оформлении заказа");
@@ -118,6 +129,27 @@ export default function CartPage() {
     );
   }
 
+  if (isMultiRestaurant) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl p-6 text-center max-w-md">
+          <div className="text-5xl mb-3">⚠️</div>
+          <h2 className="text-xl font-bold mb-2">Разные рестораны</h2>
+          <p className="text-gray-500 mb-4">
+            Вы добавили товары из разных ресторанов. 
+            Пожалуйста, оформите заказы по отдельности.
+          </p>
+          <button 
+            onClick={() => router.push("/food")}
+            className="bg-orange-500 text-white px-6 py-2 rounded-lg"
+          >
+            Назад в меню
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 pb-24">
       <div className="sticky top-0 z-10 bg-white border-b px-4 py-3">
@@ -125,6 +157,7 @@ export default function CartPage() {
           ←
         </button>
         <h1 className="text-center font-bold text-lg -mt-6">Корзина</h1>
+        <p className="text-center text-xs text-gray-500">{restaurant?.restaurantName}</p>
       </div>
 
       <div className="p-4 space-y-4">

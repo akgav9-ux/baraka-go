@@ -24,17 +24,25 @@ export interface Dish {
 
 export async function getRestaurants(category?: string): Promise<Restaurant[]> {
   const url = category && category !== "Barchasi" 
-    ? `/api/restaurants?category=${encodeURIComponent(category)}`
-    : "/api/restaurants";
+    ? `/api/food-restaurants?category=${encodeURIComponent(category)}`
+    : "/api/food-restaurants";
     
   const res = await fetch(url);
   if (!res.ok) throw new Error("Ошибка загрузки");
-  return res.json();
+  const data = await res.json();
+  
+  return data.map((r: Restaurant) => ({
+    ...r,
+    badges: [
+      ...(r.deliveryFee === 0 ? ["freeDelivery"] : []),
+      ...(r.rating >= 4.7 ? ["discount"] : [])
+    ]
+  }));
 }
 
 export async function getRestaurant(id: number): Promise<Restaurant & { dishes: Dish[] }> {
-  const res = await fetch(`/api/restaurants/${id}`);
-  if (!res.ok) throw new Error("Ошибка загрузки");
+  const res = await fetch(`/api/food-restaurants/${id}`);
+  if (!res.ok) throw new Error("Not found");
   return res.json();
 }
 

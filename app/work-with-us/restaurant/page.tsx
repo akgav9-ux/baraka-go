@@ -10,6 +10,8 @@ export default function RestaurantPartnershipPage() {
     name: "",
     phone: "",
     email: "",
+    password: "",
+    confirmPassword: "",
     restaurantName: "",
     restaurantCategory: "",
     address: "",
@@ -18,27 +20,56 @@ export default function RestaurantPartnershipPage() {
     instagram: "",
   });
 
+  // ТОЛЬКО ЭТИ КАТЕГОРИИ
+  const categories = [
+    "Fast Food",
+    "Sushi",
+    "Pizza",
+    "Pishiriqlar",
+    "Milliy taomlari",
+    "Sog‘lom taom",
+  ];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (formData.password !== formData.confirmPassword) {
+      alert("❗ Parollar mos kelmadi");
+      return;
+    }
+    
+    if (formData.password.length < 4) {
+      alert("❗ Parol kamida 4 ta belgidan iborat bo'lishi kerak");
+      return;
+    }
+    
     setLoading(true);
 
     try {
-      // Правильный API endpoint
       const res = await fetch("/api/partners/restaurant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          password: formData.password,
+          restaurantName: formData.restaurantName,
+          restaurantCategory: formData.restaurantCategory,
+          address: formData.address,
+          description: formData.description,
+          website: formData.website,
+          instagram: formData.instagram,
+        }),
       });
 
       if (res.ok) {
-        alert("✅ Ariza yuborildi! Administrator bilan bog'lanamiz.");
+        alert("✅ Ariza yuborildi! Administrator tekshirgandan so'ng sizga tasdiqlash keladi.");
         router.push("/");
       } else {
-        const error = await res.json();
-        alert("❌ Xatolik: " + (error.error || "Qaytadan urinib ko'ring"));
+        alert("❌ Xatolik yuz berdi");
       }
     } catch (error) {
-      console.error(error);
       alert("❌ Xatolik yuz berdi");
     } finally {
       setLoading(false);
@@ -48,10 +79,7 @@ export default function RestaurantPartnershipPage() {
   return (
     <main className="min-h-screen bg-gray-100 p-4 pt-20">
       <div className="max-w-md mx-auto">
-        <button 
-          onClick={() => router.back()} 
-          className="text-orange-600 mb-4 flex items-center gap-1"
-        >
+        <button onClick={() => router.back()} className="text-orange-600 mb-4 flex items-center gap-1">
           ← Orqaga
         </button>
         
@@ -62,130 +90,113 @@ export default function RestaurantPartnershipPage() {
             <p className="text-gray-500 text-sm">Biz bilan ishlashni boshlang</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Ism */}
-            <div>
-              <label className="block text-sm font-semibold mb-1">Ismingiz *</label>
-              <input
-                type="text"
-                required
-                className="w-full p-3 border rounded-xl focus:outline-none focus:border-orange-500"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-
-            {/* Telefon */}
-            <div>
-              <label className="block text-sm font-semibold mb-1">Telefon raqam *</label>
-              <input
-                type="tel"
-                required
-                placeholder="+998 XX XXX XX XX"
-                className="w-full p-3 border rounded-xl focus:outline-none focus:border-orange-500"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              />
-            </div>
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-semibold mb-1">Email</label>
-              <input
-                type="email"
-                placeholder="restoran@mail.com"
-                className="w-full p-3 border rounded-xl focus:outline-none focus:border-orange-500"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-
-            {/* Restoran nomi */}
-            <div>
-              <label className="block text-sm font-semibold mb-1">Restoran nomi *</label>
-              <input
-                type="text"
-                required
-                placeholder="Masalan: Pizza House"
-                className="w-full p-3 border rounded-xl focus:outline-none focus:border-orange-500"
-                value={formData.restaurantName}
-                onChange={(e) => setFormData({ ...formData, restaurantName: e.target.value })}
-              />
-            </div>
-
-            {/* Kategoriya */}
-            <div>
-              <label className="block text-sm font-semibold mb-1">Restoran kategoriyasi *</label>
-              <select
-                required
-                className="w-full p-3 border rounded-xl focus:outline-none focus:border-orange-500"
-                value={formData.restaurantCategory}
-                onChange={(e) => setFormData({ ...formData, restaurantCategory: e.target.value })}
-              >
-                <option value="">Tanlang</option>
-                <option value="Pizza">Pizza</option>
-                <option value="Burger">Burger</option>
-                <option value="Sushi">Sushi</option>
-                <option value="Uzbek">O‘zbek taomlari</option>
-                <option value="European">Yevropa taomlari</option>
-                <option value="FastFood">Fast Food</option>
-                <option value="Cafe">Kafe</option>
-              </select>
-            </div>
-
-            {/* Manzil */}
-            <div>
-              <label className="block text-sm font-semibold mb-1">Restoran manzili *</label>
-              <input
-                type="text"
-                required
-                placeholder="Toshkent shahar, ..."
-                className="w-full p-3 border rounded-xl focus:outline-none focus:border-orange-500"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              />
-            </div>
-
-            {/* Tavsif */}
-            <div>
-              <label className="block text-sm font-semibold mb-1">Restoran haqida qisqacha</label>
-              <textarea
-                placeholder="Restoraningiz haqida ma'lumot..."
-                className="w-full p-3 border rounded-xl focus:outline-none focus:border-orange-500 resize-none"
-                rows={3}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-
-            {/* Website */}
-            <div>
-              <label className="block text-sm font-semibold mb-1">Website (agar bor bo'lsa)</label>
-              <input
-                type="url"
-                placeholder="https://..."
-                className="w-full p-3 border rounded-xl focus:outline-none focus:border-orange-500"
-                value={formData.website}
-                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-              />
-            </div>
-
-            {/* Instagram */}
-            <div>
-              <label className="block text-sm font-semibold mb-1">Instagram</label>
-              <input
-                type="text"
-                placeholder="@restoran_nomi"
-                className="w-full p-3 border rounded-xl focus:outline-none focus:border-orange-500"
-                value={formData.instagram}
-                onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
-              />
-            </div>
-
+          <form onSubmit={handleSubmit} className="space-y-3 max-h-[60vh] overflow-y-auto px-1">
+            <input
+              type="text"
+              required
+              placeholder="Ismingiz *"
+              className="w-full p-2 border rounded-xl text-sm"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            />
+            
+            <input
+              type="tel"
+              required
+              placeholder="Telefon raqam *"
+              className="w-full p-2 border rounded-xl text-sm"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            />
+            
+            <input
+              type="email"
+              required
+              placeholder="Email *"
+              className="w-full p-2 border rounded-xl text-sm"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
+            
+            <input
+              type="password"
+              required
+              placeholder="Parol * (kamida 4 belgi)"
+              className="w-full p-2 border rounded-xl text-sm"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            />
+            
+            <input
+              type="password"
+              required
+              placeholder="Parolni takrorlang *"
+              className="w-full p-2 border rounded-xl text-sm"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+            />
+            
+            <input
+              type="text"
+              required
+              placeholder="Restoran nomi *"
+              className="w-full p-2 border rounded-xl text-sm"
+              value={formData.restaurantName}
+              onChange={(e) => setFormData({ ...formData, restaurantName: e.target.value })}
+            />
+            
+            {/* ТОЛЬКО ЭТИ КАТЕГОРИИ В ВЫПАДАЮЩЕМ СПИСКЕ */}
+            <select
+              required
+              className="w-full p-2 border rounded-xl text-sm"
+              value={formData.restaurantCategory}
+              onChange={(e) => setFormData({ ...formData, restaurantCategory: e.target.value })}
+            >
+              <option value="">Kategoriya tanlang *</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+            
+            <input
+              type="text"
+              required
+              placeholder="Manzil *"
+              className="w-full p-2 border rounded-xl text-sm"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            />
+            
+            <textarea
+              placeholder="Restoran haqida (ixtiyoriy)"
+              className="w-full p-2 border rounded-xl text-sm resize-none"
+              rows={2}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            />
+            
+            <input
+              type="url"
+              placeholder="Website (ixtiyoriy)"
+              className="w-full p-2 border rounded-xl text-sm"
+              value={formData.website}
+              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+            />
+            
+            <input
+              type="text"
+              placeholder="Instagram (ixtiyoriy)"
+              className="w-full p-2 border rounded-xl text-sm"
+              value={formData.instagram}
+              onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
+            />
+            
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white p-3 rounded-xl font-semibold disabled:opacity-50 transition transform active:scale-95 mt-2"
+              className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white p-2 rounded-xl font-semibold disabled:opacity-50 mt-2"
             >
               {loading ? "Yuborilmoqda..." : "📝 Ariza yuborish"}
             </button>

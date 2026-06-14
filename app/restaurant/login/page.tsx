@@ -30,6 +30,16 @@ export default function RestaurantLoginPage() {
     instagram: "",
   });
 
+  // НОВЫЕ КАТЕГОРИИ
+  const categories = [
+    "Fast Food",
+    "Sushi",
+    "Pizza",
+    "Pishiriqlar",
+    "Milliy taomlari",
+    "Sog‘lom taom",
+  ];
+
   // Вход в систему
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,7 +106,7 @@ export default function RestaurantLoginPage() {
           description: registerData.description,
           website: registerData.website,
           instagram: registerData.instagram,
-          password: registerData.password, // Сохраняем пароль
+          password: registerData.password,
         }),
       });
 
@@ -200,7 +210,7 @@ export default function RestaurantLoginPage() {
               </form>
             </>
           ) : (
-            // Форма РЕГИСТРАЦИИ (с паролем)
+            // Форма РЕГИСТРАЦИИ (с новыми категориями)
             <>
               <div className="text-center mb-6">
                 <div className="text-5xl mb-2">📝</div>
@@ -257,6 +267,8 @@ export default function RestaurantLoginPage() {
                   value={registerData.restaurantName}
                   onChange={(e) => setRegisterData({ ...registerData, restaurantName: e.target.value })}
                 />
+                
+                {/* НОВЫЕ КАТЕГОРИИ В ВЫПАДАЮЩЕМ СПИСКЕ */}
                 <select
                   required
                   className="w-full p-2 border rounded-xl text-sm"
@@ -264,13 +276,11 @@ export default function RestaurantLoginPage() {
                   onChange={(e) => setRegisterData({ ...registerData, restaurantCategory: e.target.value })}
                 >
                   <option value="">Kategoriya tanlang *</option>
-                  <option value="Pizza">Pizza</option>
-                  <option value="Burger">Burger</option>
-                  <option value="Sushi">Sushi</option>
-                  <option value="Uzbek">O‘zbek taomlari</option>
-                  <option value="European">Yevropa taomlari</option>
-                  <option value="FastFood">Fast Food</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
                 </select>
+                
                 <input
                   type="text"
                   required
