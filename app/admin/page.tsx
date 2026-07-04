@@ -45,9 +45,10 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/applications");
       const data = await res.json();
-      setApplications(data);
+      setApplications(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error loading applications:", error);
+      setApplications([]);
     }
   };
 
@@ -55,9 +56,10 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/partners/restaurant");
       const data = await res.json();
-      setPartnerRequests(data);
+      setPartnerRequests(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error loading partner requests:", error);
+      setPartnerRequests([]);
     } finally {
       setLoading(false);
     }
@@ -108,7 +110,6 @@ export default function AdminPage() {
       case "gazel": return "🚚";
       case "intercity": return "🌍";
       case "taxi": return "🚕";
-      case "restaurant": return "🍕";
       default: return "🚗";
     }
   };
@@ -119,21 +120,20 @@ export default function AdminPage() {
       case "gazel": return "Gazel yuk tashuvchi";
       case "intercity": return "Mejgorod haydovchi";
       case "taxi": return "Taksi haydovchi";
-      case "restaurant": return "Restoran";
       default: return type;
     }
   };
 
-  // Объединяем все заявки в один массив
+  // БЕЗОПАСНОЕ ОБЪЕДИНЕНИЕ МАССИВОВ
   const allApplications = [
-    ...applications.map(app => ({
+    ...(Array.isArray(applications) ? applications.map(app => ({
       ...app,
       type: "driver" as const,
       displayName: `${app.name} ${app.surname}`,
       displayInfo: getTransportName(app.transport),
       icon: getTransportIcon(app.transport),
-    })),
-    ...partnerRequests.map(req => ({
+    })) : []),
+    ...(Array.isArray(partnerRequests) ? partnerRequests.map(req => ({
       id: req.id,
       name: req.name,
       surname: "",
@@ -154,7 +154,7 @@ export default function AdminPage() {
       description: req.description,
       website: req.website,
       instagram: req.instagram,
-    })),
+    })) : []),
   ];
 
   const filteredApplications = allApplications.filter(app => {
@@ -247,6 +247,14 @@ export default function AdminPage() {
             }`}
           >
             ⏳ Kutilmoqda ({stats.pending})
+          </button>
+          <button
+            onClick={() => setActiveTab("taxi")}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${
+              activeTab === "taxi" ? "bg-yellow-600 text-white" : "bg-white text-gray-700"
+            }`}
+          >
+            🚕 Taksi ({stats.taxi})
           </button>
           <button
             onClick={() => setActiveTab("courier")}

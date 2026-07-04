@@ -15,13 +15,14 @@ export default function WorkWithUsPage() {
   const services = [
     {
       id: 1,
-      title: "Haydovchi bo‘lish",
+      title: "Taksi haydovchi bo‘lish",
       description: "Taksi haydovchisi sifatida ishlash",
       icon: "🚕",
       bgColor: "from-yellow-500 to-orange-500",
       glowColor: "shadow-yellow-500/50",
-      route: "/work-with-us/driver",
-      badge: "🔥 Ommabop"
+      route: "/work-with-us/taxi",
+      badge: "🔥 Ommabop",
+      hasLogin: true
     },
     {
       id: 2,
@@ -31,7 +32,8 @@ export default function WorkWithUsPage() {
       bgColor: "from-green-500 to-emerald-500",
       glowColor: "shadow-green-500/50",
       route: "/work-with-us/courier",
-      badge: "📈 Talab katta"
+      badge: "📈 Talab katta",
+      hasLogin: true
     },
     {
       id: 3,
